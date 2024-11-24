@@ -22,6 +22,7 @@ public class CalculatorTest
     [Theory]
     [InlineData("(1 + 2) * 2", 6)]
     [InlineData("100 * 25 + (32 - 5 + 7) / 2 - 3", 2514)]
+    [InlineData("(29 + 231) * 3 - 256 / 8", 748)]
     public void ComputeExpressionWithParentesisReturnCorrectResult(string expression, double expectedResult)
     {
         Calculator calculator = new Calculator();

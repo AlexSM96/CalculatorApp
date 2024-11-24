@@ -52,7 +52,6 @@ public class Calculator
         return results.Pop();
     }
 
-
     /// <summary>
     /// Метод позволяет преобразовать строку "expression" в последовательный список из операндов и операторов 
     /// </summary>
@@ -83,7 +82,8 @@ public class Calculator
             {
                 case "+":
                 case "-":
-                    while (operators.TryPeek(out string? op) && !string.IsNullOrWhiteSpace(op) && !op.Equals("("))
+                    while (operators.TryPeek(out string? op) && !string.IsNullOrWhiteSpace(op) && !op.Equals("(") 
+                        && GetOperationPriority(op) >= 1)
                     {
                         resultQueue.Add(operators.Pop());
                     }
@@ -92,7 +92,8 @@ public class Calculator
                     break;
                 case "*":
                 case "/":
-                    while (operators.TryPeek(out string? op) && !string.IsNullOrWhiteSpace(op) && !op.Equals("("))
+                    while (operators.TryPeek(out string? op) && !string.IsNullOrWhiteSpace(op) && !op.Equals("(") 
+                        && GetOperationPriority(op) >= 2)
                     {
                         resultQueue.Add(operators.Pop());
                     }
@@ -122,5 +123,22 @@ public class Calculator
         }
 
         return resultQueue;
+    }
+
+    /// <summary>
+    /// Метод для определения приоритета математичекой операции.
+    /// Чем больше результат метода, тем приоритетнее входная операция.
+    /// </summary>
+    /// <param name="operation"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    private int GetOperationPriority(string operation)
+    {
+        return operation switch
+        {
+            "+" or "-" => 1,
+            "*" or "/" => 2,
+            _ => throw new ArgumentException($"Неизвестная математическая операция: {operation}")
+        };
     }
 }
