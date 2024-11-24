@@ -6,6 +6,8 @@ public class Devision : IOperation
 {
     public string Symbol => "/";
 
+    public int Priority => 2;
+
     public double Execute(double leftOperand, double rightOperand)
     {
         if(rightOperand == 0)

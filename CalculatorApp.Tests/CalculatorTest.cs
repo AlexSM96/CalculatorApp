@@ -1,9 +1,6 @@
 ﻿using CalculatorApp.Source;
 using CalculatorApp.Source.Interfaces;
 using CalculatorApp.Source.Operations;
-using System.Numerics;
-using System.Reflection;
-using System.Security.Cryptography.X509Certificates;
 using Xunit;
 
 namespace CalculatorApp.Tests;

@@ -19,6 +19,9 @@ public class Calculator
         };
     }
 
+    /// <summary>
+    /// Метод для расчета математического выражения из строки
+    /// </summary>
     public double Compute(string expression)
     {
         var infixTokens = Tokenize(expression);
@@ -54,6 +57,10 @@ public class Calculator
         return Math.Round(results.Pop(), 2);
     }
 
+    /// <summary>
+    /// Метод позволяет рыширить список базовых оперций (+ - * /)
+    /// </summary>
+    /// <returns>True если опрция добавлена, иначе False</returns>
     public bool TryRegisterOperation(IOperation operation)
     {
         if (_operations.ContainsKey(operation.Symbol))
@@ -67,65 +74,43 @@ public class Calculator
     /// <summary>
     /// Метод позволяет преобразовать строку "expression" в последовательный список из операндов и операторов 
     /// </summary>
-    /// <param name="expression"></param>
-    /// <returns>Список строк</returns>
     private List<string> Tokenize(string expression)
     {
-        var regexPattern = new Regex(@"(\d+\,\d+|\d+|[+*/()-])");
-
-        return regexPattern
-            .Matches(expression)
-            .Select(match => match.Value.ToString())
+        return Regex.Split(expression, @$"(\d+\,\d+|\d+|[+/*()-])")
+            .Where(token => !string.IsNullOrWhiteSpace(token))
+            .Select(token => token.Trim())
             .ToList(); 
     }
 
     /// <summary>
     /// Метод для преобразования инфиксного представления в постфиксное (Польская обратная нотация) 
     /// </summary>
-    /// <param name="infixTokens"></param>
-    /// <returns></returns>
     private List<string> ConvertToPostfix(List<string> infixTokens)
     {
         var operators = new Stack<string>();
         var resultQueue = new List<string>();
         foreach (string token in infixTokens) 
         {
-            switch (token)
+            if (_operations.ContainsKey(token)) 
             {
-                case "+":
-                case "-":
-                    while (operators.TryPeek(out string? op) && !string.IsNullOrWhiteSpace(op) && !op.Equals("(") 
-                        && GetOperationPriority(op) >= 1)
-                    {
-                        resultQueue.Add(operators.Pop());
-                    }
+                while (operators.TryPeek(out string? op) && !string.IsNullOrWhiteSpace(op) && !op.Equals("(")
+                         && GetOperationPriority(op) >= _operations[token].Priority)
+                {
+                    resultQueue.Add(operators.Pop());
+                }
 
-                    operators.Push(token);
-                    break;
-                case "*":
-                case "/":
-                    while (operators.TryPeek(out string? op) && !string.IsNullOrWhiteSpace(op) && !op.Equals("(") 
-                        && GetOperationPriority(op) >= 2)
-                    {
-                        resultQueue.Add(operators.Pop());
-                    }
-
-                    operators.Push(token);
-                    break;
-                case "(":
-                    operators.Push(token);
-                    break;
-                case ")":
-                    while (operators.TryPeek(out string? op) && !string.IsNullOrWhiteSpace(op) && !op.Equals("("))
-                    {
-                        resultQueue.Add(operators.Pop());
-                    }
-
-                    operators.Pop();
-                    break;
-                default:
+                operators.Push(token);
+            }
+            else
+            {
+                if(double.TryParse(token, out var result))
+                {
                     resultQueue.Add(token);
-                    break;
+                }
+                else
+                {
+                    ProcessParentheses(token, resultQueue, operators);
+                }
             }
         }
 
@@ -138,19 +123,38 @@ public class Calculator
     }
 
     /// <summary>
+    /// Метод для обработки вырожений со скобками.
+    /// Превращает выражение в постфиксную нотацию убирая из выражения скобки 
+    /// </summary>
+    private void ProcessParentheses(string token, List<string> resultQueue, Stack<string> operators)
+    {
+        switch (token)
+        {
+            case "(":
+                operators.Push(token);
+                break;
+            case ")":
+                while (operators.TryPeek(out string? op) && !string.IsNullOrWhiteSpace(op) && !op.Equals("("))
+                {
+                    resultQueue.Add(operators.Pop());
+                }
+
+                operators.Pop();
+                break;
+        }
+    }
+
+    /// <summary>
     /// Метод для определения приоритета математичекой операции.
     /// Чем больше результат метода, тем приоритетнее входная операция.
     /// </summary>
-    /// <param name="operation"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
     private int GetOperationPriority(string operation)
     {
-        return operation switch
-        {
-            "+" or "-" => 1,
-            "*" or "/" => 2,
-            _ => throw new ArgumentException($"Неизвестная математическая операция: {operation}")
-        };
+       if(!_operations.ContainsKey(operation))
+       {
+            throw new ArgumentException($"Неизвестная математическая операция: {operation}");
+       }
+
+       return _operations[operation].Priority;
     }
 }
