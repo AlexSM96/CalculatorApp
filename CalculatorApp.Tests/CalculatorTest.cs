@@ -19,11 +19,11 @@ public class CalculatorTest
         Assert.Equal(expectedResult, result);
     }
 
-    [Fact]
-    public void ComputeExpressionWithParentesisReturnCorrectResult()
+    [Theory]
+    [InlineData("(1 + 2) * 2", 6)]
+    [InlineData("100 * 25 + (32 - 5 + 7) / 2 - 3", 2514)]
+    public void ComputeExpressionWithParentesisReturnCorrectResult(string expression, double expectedResult)
     {
-        string expression = "(1 + 2) * 2";
-        double expectedResult = 6;
         Calculator calculator = new Calculator();
 
         var result = calculator.Compute(expression);

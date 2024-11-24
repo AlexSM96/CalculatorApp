@@ -19,20 +19,37 @@ public class Calculator
 
     public double Compute(string expression)
     {
-        var tokenizeExpression = Tokenize(expression);
+        var infixTokens = Tokenize(expression);
+        var postfixTokens = ConvertToPostfix(infixTokens);
+        var results = new Stack<double>();
+        foreach (string token in postfixTokens) 
+        {
+            if(double.TryParse(token, out double value))
+            {
+                results.Push(value);
+                continue;
+            }
 
-        if(tokenizeExpression.Count != 3 || !double.TryParse(tokenizeExpression[0], out double leftOperand) 
-            || !double.TryParse(tokenizeExpression[2], out double rightOperand))
+            if (!_operations.ContainsKey(token))
+            {
+                continue;
+            }
+
+            if (!results.TryPop(out double rightOperand) || !results.TryPop(out double leftoperand))
+            {
+                throw new InvalidOperationException("Неверный формат выражения");
+            }
+
+            double operationResult = _operations[token].Invoke(leftoperand, rightOperand);
+            results.Push(operationResult);
+        }
+
+        if (results.Count != 1)
         {
             throw new InvalidOperationException("Неверный формат выражения");
         }
 
-        if (!_operations.ContainsKey(tokenizeExpression[1]))
-        {
-            throw new InvalidOperationException("Неверный формат выражения");
-        }
-
-        return _operations[tokenizeExpression[1]].Invoke(leftOperand, rightOperand);
+        return results.Pop();
     }
 
 
@@ -49,5 +66,61 @@ public class Calculator
             .Matches(expression)
             .Select(match => match.Value.ToString())
             .ToList(); 
+    }
+
+    /// <summary>
+    /// Метод для преобразования инфиксного представления в постфиксное (Польская обратная нотация) 
+    /// </summary>
+    /// <param name="infixTokens"></param>
+    /// <returns></returns>
+    private List<string> ConvertToPostfix(List<string> infixTokens)
+    {
+        var operators = new Stack<string>();
+        var resultQueue = new List<string>();
+        foreach (string token in infixTokens) 
+        {
+            switch (token)
+            {
+                case "+":
+                case "-":
+                    while (operators.TryPeek(out string? op) && !string.IsNullOrWhiteSpace(op) && !op.Equals("("))
+                    {
+                        resultQueue.Add(operators.Pop());
+                    }
+
+                    operators.Push(token);
+                    break;
+                case "*":
+                case "/":
+                    while (operators.TryPeek(out string? op) && !string.IsNullOrWhiteSpace(op) && !op.Equals("("))
+                    {
+                        resultQueue.Add(operators.Pop());
+                    }
+
+                    operators.Push(token);
+                    break;
+                case "(":
+                    operators.Push(token);
+                    break;
+                case ")":
+                    while (operators.TryPeek(out string? op) && !string.IsNullOrWhiteSpace(op) && !op.Equals("("))
+                    {
+                        resultQueue.Add(operators.Pop());
+                    }
+
+                    operators.Pop();
+                    break;
+                default:
+                    resultQueue.Add(token);
+                    break;
+            }
+        }
+
+        while(operators.Count > 0)
+        {
+            resultQueue.Add(operators.Pop());
+        }
+
+        return resultQueue;
     }
 }
