@@ -1,4 +1,5 @@
 ﻿using CalculatorApp.Source;
+using CalculatorApp.Source.Operations;
 
 var calculator = new Calculator();
 

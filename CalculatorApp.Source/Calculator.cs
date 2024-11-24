@@ -6,16 +6,16 @@ namespace CalculatorApp.Source;
 
 public class Calculator
 {
-    private readonly Dictionary<string, IOperation> _operations;
+    private readonly List<IOperation> _operations;
 
     public Calculator()
     {
         _operations = new()
         {
-            ["+"] = new Addition(),
-            ["-"] = new Subtraction(),
-            ["*"] = new Multiplication(),
-            ["/"] = new Devision()
+           new Addition(),
+           new Subtraction(),
+           new Multiplication(),
+           new Devision()
         };
     }
 
@@ -27,15 +27,16 @@ public class Calculator
         var infixTokens = Tokenize(expression);
         var postfixTokens = ConvertToPostfix(infixTokens);
         var results = new Stack<double>();
-        foreach (string token in postfixTokens) 
+        foreach (string token in postfixTokens)
         {
-            if(double.TryParse(token, out double value))
+            if (double.TryParse(token, out double value))
             {
                 results.Push(value);
                 continue;
             }
 
-            if (!_operations.ContainsKey(token))
+            var operation = _operations.FirstOrDefault(x => x.Symbol.Equals(token));
+            if (operation is null)
             {
                 continue;
             }
@@ -45,7 +46,7 @@ public class Calculator
                 throw new InvalidOperationException("Неверный формат выражения");
             }
 
-            double operationResult = _operations[token].Execute(leftoperand, rightOperand);
+            double operationResult = operation.Execute(leftoperand, rightOperand);
             results.Push(operationResult);
         }
 
@@ -63,12 +64,13 @@ public class Calculator
     /// <returns>True если опрция добавлена, иначе False</returns>
     public bool TryRegisterOperation(IOperation operation)
     {
-        if (_operations.ContainsKey(operation.Symbol))
+        if (_operations.Any(x => x.Symbol.Equals(operation.Symbol)))
         {
             return false;
         }
 
-        return _operations.TryAdd(operation.Symbol, operation);
+        _operations.Add(operation);
+        return true;
     }
 
     /// <summary>
@@ -79,7 +81,7 @@ public class Calculator
         return Regex.Split(expression, @$"(\d+\,\d+|\d+|[+/*()-])")
             .Where(token => !string.IsNullOrWhiteSpace(token))
             .Select(token => token.Trim())
-            .ToList(); 
+            .ToList();
     }
 
     /// <summary>
@@ -89,12 +91,13 @@ public class Calculator
     {
         var operators = new Stack<string>();
         var resultQueue = new List<string>();
-        foreach (string token in infixTokens) 
+        foreach (string token in infixTokens)
         {
-            if (_operations.ContainsKey(token)) 
+            var operation = _operations.FirstOrDefault(x => x.Symbol.Equals(token));
+            if (operation is not null)
             {
                 while (operators.TryPeek(out string? op) && !string.IsNullOrWhiteSpace(op) && !op.Equals("(")
-                         && GetOperationPriority(op) >= _operations[token].Priority)
+                         && GetOperationPriority(op) >= operation.Priority)
                 {
                     resultQueue.Add(operators.Pop());
                 }
@@ -103,7 +106,7 @@ public class Calculator
             }
             else
             {
-                if(double.TryParse(token, out var result))
+                if (double.TryParse(token, out var result))
                 {
                     resultQueue.Add(token);
                 }
@@ -114,7 +117,7 @@ public class Calculator
             }
         }
 
-        while(operators.Count > 0)
+        while (operators.Count > 0)
         {
             resultQueue.Add(operators.Pop());
         }
@@ -148,13 +151,14 @@ public class Calculator
     /// Метод для определения приоритета математичекой операции.
     /// Чем больше результат метода, тем приоритетнее входная операция.
     /// </summary>
-    private int GetOperationPriority(string operation)
+    private int GetOperationPriority(string token)
     {
-       if(!_operations.ContainsKey(operation))
-       {
-            throw new ArgumentException($"Неизвестная математическая операция: {operation}");
-       }
+        var operation = _operations.FirstOrDefault(x => x.Symbol.Equals(token));
+        if (operation is null)
+        {
+            throw new ArgumentException($"Неизвестная математическая операция: {token}");
+        }
 
-       return _operations[operation].Priority;
+        return operation.Priority;
     }
 }
