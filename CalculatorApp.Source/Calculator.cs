@@ -35,6 +35,12 @@ public class Calculator
         return _operations[tokenizeExpression[1]].Invoke(leftOperand, rightOperand);
     }
 
+
+    /// <summary>
+    /// Метод позволяет преобразовать строку "expression" в последовательный список из операндов и операторов 
+    /// </summary>
+    /// <param name="expression"></param>
+    /// <returns>Список строк</returns>
     private List<string> Tokenize(string expression)
     {
         var regexPattern = new Regex(@"(\d+\,\d+|\d+|[+*/()-])");
