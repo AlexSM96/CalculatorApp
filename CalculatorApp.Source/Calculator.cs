@@ -40,6 +40,11 @@ public class Calculator
                 throw new InvalidOperationException("Неверный формат выражения");
             }
 
+            if(rightOperand == 0 && token.Equals("/"))
+            {
+                throw new DivideByZeroException("Деление на ноль");
+            }
+
             double operationResult = _operations[token].Invoke(leftoperand, rightOperand);
             results.Push(operationResult);
         }
@@ -49,7 +54,7 @@ public class Calculator
             throw new InvalidOperationException("Неверный формат выражения");
         }
 
-        return results.Pop();
+        return Math.Round(results.Pop(), 2);
     }
 
     /// <summary>
