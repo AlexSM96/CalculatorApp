@@ -1,4 +1,9 @@
 ﻿using CalculatorApp.Source;
+using CalculatorApp.Source.Interfaces;
+using CalculatorApp.Source.Operations;
+using System.Numerics;
+using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using Xunit;
 
 namespace CalculatorApp.Tests;
@@ -66,5 +71,16 @@ public class CalculatorTest
         Func<object?> result = () => calculator.Compute(expression);
 
         Assert.Throws<InvalidOperationException>(result);
+    }
+
+    [Fact]
+    public void TryRegisterNewOperationMustReturnTrue()
+    {
+        IOperation operation = new Power();
+        Calculator calculator = new Calculator();
+
+        bool result = calculator.TryRegisterOperation(operation);
+
+        Assert.True(result);
     }
 }

@@ -1,19 +1,21 @@
-﻿using System.Text.RegularExpressions;
+﻿using CalculatorApp.Source.Interfaces;
+using CalculatorApp.Source.Operations;
+using System.Text.RegularExpressions;
 
 namespace CalculatorApp.Source;
 
 public class Calculator
 {
-    private readonly Dictionary<string, Func<double, double, double>> _operations;
+    private readonly Dictionary<string, IOperation> _operations;
 
     public Calculator()
     {
         _operations = new()
         {
-            ["+"] = (x, y) => x + y,
-            ["-"] = (x, y) => x - y,
-            ["*"] = (x, y) => x * y,
-            ["/"] = (x, y) => x / y,
+            ["+"] = new Addition(),
+            ["-"] = new Subtraction(),
+            ["*"] = new Multiplication(),
+            ["/"] = new Devision()
         };
     }
 
@@ -40,12 +42,7 @@ public class Calculator
                 throw new InvalidOperationException("Неверный формат выражения");
             }
 
-            if(rightOperand == 0 && token.Equals("/"))
-            {
-                throw new DivideByZeroException("Деление на ноль");
-            }
-
-            double operationResult = _operations[token].Invoke(leftoperand, rightOperand);
+            double operationResult = _operations[token].Execute(leftoperand, rightOperand);
             results.Push(operationResult);
         }
 
@@ -55,6 +52,16 @@ public class Calculator
         }
 
         return Math.Round(results.Pop(), 2);
+    }
+
+    public bool TryRegisterOperation(IOperation operation)
+    {
+        if (_operations.ContainsKey(operation.Symbol))
+        {
+            return false;
+        }
+
+        return _operations.TryAdd(operation.Symbol, operation);
     }
 
     /// <summary>
